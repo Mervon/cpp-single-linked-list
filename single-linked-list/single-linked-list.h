@@ -1,3 +1,4 @@
+
 #include <cassert>
 #include <cstddef>
 #include <string>
@@ -209,29 +210,25 @@ public:
     }
 
     SingleLinkedList(std::initializer_list<Type> values) {
-        this->rassign(values.begin(), values.end());
+        this->Assign(values.begin(), values.end());
     }
 
     SingleLinkedList(const SingleLinkedList& other) {
         assert(size_ == 0 && head_.next_node == nullptr);
 
         SingleLinkedList tmp;
-        
-        SingleLinkedList tmp1;
 
-        tmp.assign(other.begin(), other.end());
+        tmp.Assign(other.begin(), other.end());
 
-        tmp1.assign(tmp.begin(), tmp.end());
-
-        swap(tmp1);
+        swap(tmp);
     }
 
     SingleLinkedList& operator=(const SingleLinkedList& rhs) {
-        assert(this != &rhs);
-        {
-            auto copy = new SingleLinkedList{rhs};
-            swap(*copy);
+        if (this != &rhs) {
+            auto rhs_copy{rhs};
+            swap(rhs_copy);
         }
+
         return *this;
     }
 
@@ -273,7 +270,7 @@ public:
     }
 
     void PopFront() noexcept {
-        assert(size_ != 0);
+        assert(!this->IsEmpty());
         auto tmp = head_.next_node;
         head_.next_node = head_.next_node->next_node;
         delete tmp;
@@ -286,7 +283,7 @@ public:
      */
     Iterator EraseAfter(ConstIterator pos) noexcept {
         assert(pos.node_->next_node != nullptr);
-        assert(size_ != 0);
+        assert(!this->IsEmpty());
         Iterator it{pos.node_};
         auto tmp = it.node_->next_node;
         it.node_->next_node = it.node_->next_node->next_node;
@@ -294,24 +291,19 @@ public:
         delete tmp;
         return ++it;
     }
-    
-    template<typename InputIt>
-    void assign(InputIt first, InputIt last) {
-        for (; first != last; ++first) {
-            this->PushFront(*first);
-        }
-    }
-    
-    //если переданный итератор поддерживает декрементирование, то заполнение происходит в обратном порядке
-    template<typename InputIt>
-    void rassign(InputIt first, InputIt last) {
-        for (--last; last != first; --last) {
-            this->PushFront(*last);
-        }
-        
-        this->PushFront(*last);
-    }
 
+    template<typename InputIt>
+    void Assign(InputIt first, InputIt last) {
+        SingleLinkedList tmp;
+        //красиво, но я бы не додумался сам до этого, слишком сложно для понимания, без таких точных подсказок - без шансов, да и моя реализация всё равно работала :)
+        Node **node_ptr = &this->head_.next_node;
+        for (; first != last; ++first) {
+            *node_ptr = new Node(*first, *node_ptr);
+            node_ptr = &(*node_ptr)->next_node;
+            ++size_;
+        }
+
+    }
 
 private:
     // Фиктивный узел, используется для вставки "перед первым элементом"
